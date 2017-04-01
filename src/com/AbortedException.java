@@ -3,7 +3,7 @@ package com;
 /**
  * Created by crs on 3/30/17.
  */
-public class AbortedException extends Throwable {
+public class AbortedException extends Exception {
 
     public AbortedException() {
         super();

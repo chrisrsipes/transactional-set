@@ -13,10 +13,10 @@ public class LockKey {
     private ConcurrentHashMap<Integer, Lock> map;
 
     public LockKey() {
-        map = new ConcurrentHashMap<Integer, Lock>();
+        map = new ConcurrentHashMap<>();
     }
 
-    public void lock(int key, ArrayList<Lock> lockSet) throws Exception {
+    public void lock(int key, ArrayList<Lock> lockSet) throws AbortedException, InterruptedException {
         Lock lock = map.get(key);
 
         if (lock == null) {
@@ -28,7 +28,7 @@ public class LockKey {
         if (lockSet.add(lock)) {
             if (!lock.tryLock(LOCK_TIMEOUT, TimeUnit.MILLISECONDS)) {
                 lockSet.remove(lock);
-
+                throw new AbortedException();
                 /*
                 if (Thread.getStatus() == Status.STATUS_ACTIVE) {
                     Thread.rollback();

@@ -2,15 +2,22 @@ package com;
 
 import java.util.Random;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Main {
 
-    private static final int operationCount = 500000;
+    private static final Logger logger = Logger.getLogger( Main.class.getName() );
+
+    private static final int operationCount = 100;
     private static final int [] threadCounts = {1,2,4,8};
     private static final double []  addProportions = {0.25, 0.50, 0.75};
     private static final long timeoutDuration = 10000;
+    private static final int MIN_VALUE = 0;
+    private static final int MAX_VALUE = 100000;
 
     public static void main(String[] args) {
         SkipListKey transactionalSet = new SkipListKey();
@@ -18,7 +25,11 @@ public class Main {
 
         long startTime, endTime;
 
+        logger.setLevel(Level.FINER);
+        logger.log(Level.INFO, "Starting simulation.");
+
         System.out.println("tCount\t\t% add\t\ttime (ms)");
+
 
         for (int threadCount : threadCounts) {
 
@@ -29,8 +40,7 @@ public class Main {
                 startTime = System.nanoTime();
 
                 for (int i = 0; i < operationCount; i++) {
-                    OperationType operationType = getOperationType(addProportion);
-                    threadPoolExecutor.execute(new Thread(operationType, getOperationValue(r)));
+                    threadPoolExecutor.execute(new ExtendedThread(getOperationType(addProportion), getOperationValue(), transactionalSet));
                 }
 
                 // this closes down any more tasks being scheduled for the threads to pick up
@@ -47,13 +57,16 @@ public class Main {
                     // write the output
                     System.out.println(threadCount + "\t\t" + addProportion + "\t\t" + durationMS);
 
+                    transactionalSet = new SkipListKey();
+
                 } catch (InterruptedException e) {
                     // it shouldn't interrupt my threads
                 }
 
             }
-
         }
+
+        logger.log(Level.INFO, "Finished simulation.");
     }
 
     private static OperationType getOperationType(double addProportion) {
@@ -67,7 +80,7 @@ public class Main {
         }
     }
 
-    private static int getOperationValue(Random r) {
-        return r.nextInt();
+    private static int getOperationValue() {
+        return ThreadLocalRandom.current().nextInt(MIN_VALUE, MAX_VALUE + 1);
     }
 }
