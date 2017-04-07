@@ -1,10 +1,7 @@
 package com;
 
 import java.util.Random;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -19,7 +16,6 @@ public class Main {
     private static final int MAX_VALUE = 100000;
 
     public static void main(String[] args) {
-        SkipListKey transactionalSet = new SkipListKey();
         Random r = new Random();
 
         long startTime, endTime;
@@ -30,15 +26,39 @@ public class Main {
 
 
         for (int threadCount : threadCounts) {
-
             for (double addProportion : addProportions) {
+
+                final SkipListKey transactionalSet = new SkipListKey();
 
                 ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(threadCount);
 
                 startTime = System.nanoTime();
 
                 for (int i = 0; i < operationCount; i++) {
-                    threadPoolExecutor.execute(new TThread(getOperationType(addProportion), getOperationValue(), transactionalSet));
+                    final SkipListKey.OperationType operationType = getOperationType(addProportion);
+                    final Integer operationValue = getOperationValue();
+
+                    Callable<Boolean> callable = null;
+
+                    if (operationType.equals(SkipListKey.OperationType.ADD)) {
+                        callable = new Callable<Boolean>() {
+                            @Override
+                            public Boolean call() throws Exception {
+                                return transactionalSet.add(operationValue);
+                            }
+                        };
+                    }
+                    else if (operationType.equals(SkipListKey.OperationType.REMOVE)) {
+                        callable = new Callable<Boolean>() {
+                            @Override
+                            public Boolean call() throws Exception {
+                                return transactionalSet.remove(operationValue);
+                            }
+                        };
+                    }
+
+
+                    threadPoolExecutor.execute(new TThread(callable));
                 }
 
                 // this closes down any more tasks being scheduled for the threads to pick up
@@ -54,8 +74,6 @@ public class Main {
 
                     // write the output
                     System.out.println(threadCount + "\t\t" + addProportion + "\t\t" + durationMS);
-
-                    transactionalSet = new SkipListKey();
 
                 } catch (InterruptedException e) {
                     // it shouldn't interrupt my threads
@@ -82,5 +100,4 @@ public class Main {
         return ThreadLocalRandom.current().nextInt(MIN_VALUE, MAX_VALUE + 1);
     }
 }
-
 

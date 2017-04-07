@@ -8,6 +8,8 @@ import java.util.logging.Logger;
 
 public class TThread extends java.lang.Thread {
 
+    private final Callable<Boolean> xaction;
+
     static ThreadLocal<HashSet<Lock>> lockSet = new ThreadLocal<>();
 
     public static HashSet<Lock> getLockSet() {
@@ -37,7 +39,35 @@ public class TThread extends java.lang.Thread {
     };
 
     // @TODO: figure out what the hell this is, perhaps the Validate class thing
-    static Callable<Boolean> onValidate = null;
+    static Callable<Boolean> onValidate = new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+            Transaction transaction = Transaction.getLocal();
+
+            switch (transaction.getStatus()) {
+                case ABORTED:
+                    return false;
+                case COMMITTED:
+                    return true;
+                case ACTIVE:
+                    return false;
+            }
+
+            return false;
+        }
+    };
+
+    public TThread (Callable<Boolean> xaction) {
+        this.xaction = xaction;
+    }
+
+    public void run() {
+        try {
+            doIt(this.xaction);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     public static <T> T doIt(Callable<T> xaction) throws Exception {
         T result = null;
@@ -63,6 +93,8 @@ public class TThread extends java.lang.Thread {
 
             me.abort();
             onAbort.run();
+
+            return null;
         }
     }
 

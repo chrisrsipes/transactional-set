@@ -30,4 +30,10 @@ public class SkipListKey {
         return result;
     }
 
+    public boolean remove(final int v) {
+        boolean result = false;
+
+        return result;
+    }
+
 }
