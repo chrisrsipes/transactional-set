@@ -22,7 +22,7 @@ public class SkipListKey {
         Object[] logArgs;
 
         try {
-            logArgs = new Object[] {Thread.currentThread().getId(), OperationType.ADD.toString(), v};
+            logArgs = new Object[] {java.lang.Thread.currentThread().getId(), OperationType.ADD.toString(), v};
             logger.log(Level.FINER, "Thread with id {0} attempting to acquire lock for value {2}.", logArgs);
 
             lock.lock(v, new ArrayList<Lock>());
@@ -31,25 +31,25 @@ public class SkipListKey {
 
             result = list.add(v);
 
-            logArgs = new Object[] {Thread.currentThread().getId(), OperationType.ADD.toString(), v};
+            logArgs = new Object[] {java.lang.Thread.currentThread().getId(), OperationType.ADD.toString(), v};
             logger.log(Level.FINER, "Thread with id {0} performed operation {1} with value {2}.", logArgs);
 
             if (result) {
-                ExtendedThread.currentThread().setUncaughtExceptionHandler(new ExtendedThread.UncaughtExceptionHandler() {
+                Thread.currentThread().setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
                     @Override
-                    public void uncaughtException(Thread t, Throwable e) {
-                        if (t instanceof ExtendedThread) {
-                            ExtendedThread et = (ExtendedThread) t;
+                    public void uncaughtException(java.lang.Thread t, Throwable e) {
+                        if (t instanceof Thread) {
+                            Thread et = (Thread) t;
                             logger.log(
                                     Level.WARNING,
-                                    "Unhandled Exception in thread with id {0}, of type ExtendedThread. (Operation: {1}, Value: {2}).",
+                                    "Unhandled Exception in thread with id {0}, of type Thread. (Operation: {1}, Value: {2}).",
                                     new Object[] {et.getId(), et.getOperationType(), et.getOperationValue()}
                             );
 
                             list.remove(v);
                         }
                         else {
-                            logger.log(Level.WARNING, "Unhandled Exception in thread with id {0}, not of type ExtendedThread.", t.getId());
+                            logger.log(Level.WARNING, "Unhandled Exception in thread with id {0}, not of type Thread.", t.getId());
                         }
 
                     }
@@ -57,7 +57,7 @@ public class SkipListKey {
             }
 
         } catch (Exception e) {
-            logArgs = new Object[] {Thread.currentThread().getId(), v};
+            logArgs = new Object[] {java.lang.Thread.currentThread().getId(), v};
             logger.log(Level.WARNING, "Thread with id {0} Failed to acquire lock for element {1}.", logArgs);
         }
 

@@ -25,7 +25,6 @@ public class Main {
 
         long startTime, endTime;
 
-        logger.setLevel(Level.FINER);
         logger.log(Level.INFO, "Starting simulation.");
 
         System.out.println("tCount\t\t% add\t\ttime (ms)");
@@ -40,7 +39,7 @@ public class Main {
                 startTime = System.nanoTime();
 
                 for (int i = 0; i < operationCount; i++) {
-                    threadPoolExecutor.execute(new ExtendedThread(getOperationType(addProportion), getOperationValue(), transactionalSet));
+                    threadPoolExecutor.execute(new TThread(getOperationType(addProportion), getOperationValue(), transactionalSet));
                 }
 
                 // this closes down any more tasks being scheduled for the threads to pick up
