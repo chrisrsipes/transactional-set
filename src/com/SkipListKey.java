@@ -27,11 +27,50 @@ public class SkipListKey {
     public boolean add(final int v) {
         boolean result = false;
 
+        try {
+            lock.lock(v);
+            result = list.add(v);
+
+            if (result) {
+                Transaction.getLocal().setUseInverse();
+            }
+        } catch (Exception e) {
+            // do nothing, operation will be marked as failed
+        }
+
         return result;
     }
 
     public boolean remove(final int v) {
         boolean result = false;
+
+        try {
+            lock.lock(v);
+            result = list.remove(v);
+
+            if (result) {
+                Transaction.getLocal().setUseInverse();
+            }
+        } catch (Exception e) {
+            // do nothing, operation will be marked as failed
+        }
+
+        return result;
+    }
+
+    public boolean contains(final int v) {
+        boolean result = false;
+
+        try {
+            lock.lock(v);
+            result = list.contains(v);
+
+            if (result) {
+                Transaction.getLocal().setUseInverse();
+            }
+        } catch (Exception e) {
+            // do nothing, operation will be marked as failed
+        }
 
         return result;
     }

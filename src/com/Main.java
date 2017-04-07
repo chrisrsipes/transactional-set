@@ -38,27 +38,10 @@ public class Main {
                     final SkipListKey.OperationType operationType = getOperationType(addProportion);
                     final Integer operationValue = getOperationValue();
 
-                    Callable<Boolean> callable = null;
+                    Callable<Boolean> operation = Transaction.getCallableOperation(operationType, operationValue, transactionalSet);
+                    Callable<Boolean> inverse   = Transaction.getCallableInverse(operationType, operationValue, transactionalSet);
 
-                    if (operationType.equals(SkipListKey.OperationType.ADD)) {
-                        callable = new Callable<Boolean>() {
-                            @Override
-                            public Boolean call() throws Exception {
-                                return transactionalSet.add(operationValue);
-                            }
-                        };
-                    }
-                    else if (operationType.equals(SkipListKey.OperationType.REMOVE)) {
-                        callable = new Callable<Boolean>() {
-                            @Override
-                            public Boolean call() throws Exception {
-                                return transactionalSet.remove(operationValue);
-                            }
-                        };
-                    }
-
-
-                    threadPoolExecutor.execute(new TThread(callable));
+                    threadPoolExecutor.execute(new TThread(operation, inverse));
                 }
 
                 // this closes down any more tasks being scheduled for the threads to pick up
@@ -100,4 +83,3 @@ public class Main {
         return ThreadLocalRandom.current().nextInt(MIN_VALUE, MAX_VALUE + 1);
     }
 }
-

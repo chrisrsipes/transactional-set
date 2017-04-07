@@ -1,17 +1,16 @@
 package com;
 
-
 import java.util.HashSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
-import java.util.logging.Logger;
 
 public class TThread extends java.lang.Thread {
 
-    private final Callable<Boolean> xaction;
+    private final Callable<Boolean> operation;
+    private final Callable<Boolean> inverse;
 
     //static ThreadLocal<HashSet<Lock>> lockSet = new ThreadLocal<>();
-    static HashSet<Lock> lockSet = null;
+    static HashSet<Lock> lockSet = new HashSet<Lock>();
 
     public static HashSet<Lock> getLockSet() {
         return lockSet;//.get();
@@ -58,29 +57,30 @@ public class TThread extends java.lang.Thread {
         }
     };
 
-    public TThread (Callable<Boolean> xaction) {
-        this.xaction = xaction;
-        //this.lockSet.set(new HashSet<Lock>());
-        this.lockSet = new HashSet<Lock>();
+    public TThread (Callable<Boolean> operation, Callable<Boolean> inverse) {
+        // we set these as instance variables so they can be referenced from the void run method,
+        // where the transactions are actually being created (which we'll give the operation and inverse to)
+        this.operation = operation;
+        this.inverse = inverse;
     }
 
     public void run() {
         try {
-            doIt(this.xaction);
+            doIt(this.operation, this.inverse);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public static <T> T doIt(Callable<T> xaction) throws Exception {
-        T result = null;
+    public static Boolean doIt(Callable<Boolean> operation, Callable<Boolean> inverse) throws Exception {
+        Boolean result = null;
 
         while (true) {
-            Transaction me = new Transaction();
+            Transaction me = new Transaction(operation, inverse);
             Transaction.setLocal(me);
 
             try {
-                result = xaction.call();
+                result = operation.call();
             } catch (AbortedException e) {
 
             } catch (Exception e) {
