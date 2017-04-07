@@ -10,18 +10,19 @@ public class TThread extends java.lang.Thread {
 
     private final Callable<Boolean> xaction;
 
-    static ThreadLocal<HashSet<Lock>> lockSet = new ThreadLocal<>();
+    //static ThreadLocal<HashSet<Lock>> lockSet = new ThreadLocal<>();
+    static HashSet<Lock> lockSet = null;
 
     public static HashSet<Lock> getLockSet() {
-        return lockSet.get();
+        return lockSet;//.get();
     }
 
     // clear locks
     static Runnable onAbort = new Runnable() {
         @Override
         public void run() {
-            HashSet<Lock> locks = lockSet.get();
-            for (Lock l : locks) {
+            //HashSet<Lock> locks = lockSet.get();
+            for (Lock l : lockSet) {
                 l.unlock();
             }
         }
@@ -31,8 +32,8 @@ public class TThread extends java.lang.Thread {
     static Runnable onCommit = new Runnable() {
         @Override
         public void run() {
-            HashSet<Lock> locks = lockSet.get();
-            for (Lock l : locks) {
+            //HashSet<Lock> locks = lockSet.get();
+            for (Lock l : lockSet) {
                 l.unlock();
             }
         }
@@ -59,6 +60,8 @@ public class TThread extends java.lang.Thread {
 
     public TThread (Callable<Boolean> xaction) {
         this.xaction = xaction;
+        //this.lockSet.set(new HashSet<Lock>());
+        this.lockSet = new HashSet<Lock>();
     }
 
     public void run() {

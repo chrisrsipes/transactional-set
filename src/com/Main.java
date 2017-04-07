@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 public class Main {
     private static final Logger logger = Logger.getLogger( Main.class.getName() );
 
-    private static final int operationCount = 100;
+    private static final int operationCount = 50000;
     private static final int [] threadCounts = {1,2,4,8};
     private static final double []  addProportions = {0.25, 0.50, 0.75};
     private static final long timeoutDuration = 10000;
