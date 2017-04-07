@@ -9,7 +9,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Main {
-
     private static final Logger logger = Logger.getLogger( Main.class.getName() );
 
     private static final int operationCount = 100;
@@ -68,14 +67,14 @@ public class Main {
         logger.log(Level.INFO, "Finished simulation.");
     }
 
-    private static OperationType getOperationType(double addProportion) {
+    private static SkipListKey.OperationType getOperationType(double addProportion) {
         double rand = Math.random();
 
         if (rand < addProportion) {
-            return OperationType.ADD;
+            return SkipListKey.OperationType.ADD;
         }
         else {
-            return OperationType.REMOVE;
+            return SkipListKey.OperationType.REMOVE;
         }
     }
 
@@ -83,3 +82,5 @@ public class Main {
         return ThreadLocalRandom.current().nextInt(MIN_VALUE, MAX_VALUE + 1);
     }
 }
+
+

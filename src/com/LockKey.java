@@ -16,8 +16,9 @@ public class LockKey {
         map = new ConcurrentHashMap<>();
     }
 
-    public void lock(int key, ArrayList<Lock> lockSet) throws AbortedException, InterruptedException {
+    public void lock(int key) throws AbortedException, InterruptedException {
         Lock lock = map.get(key);
+        HashSet<Lock> lockSet = TThread.getLockSet();
 
         if (lock == null) {
             Lock newLock = new ReentrantLock();
@@ -27,15 +28,14 @@ public class LockKey {
 
         if (lockSet.add(lock)) {
             if (!lock.tryLock(LOCK_TIMEOUT, TimeUnit.MILLISECONDS)) {
+
                 lockSet.remove(lock);
-                throw new AbortedException();
-                /*
-                if (Thread.getStatus() == Status.STATUS_ACTIVE) {
-                    Thread.rollback();
-                    throw new AbortedException();
+
+                if (Transaction.getLocal() != null) {
+                    Transaction.getLocal().abort();
                 }
-                Thread.getTransaction().abort();
-                */
+
+                throw new AbortedException();
             }
         }
     }

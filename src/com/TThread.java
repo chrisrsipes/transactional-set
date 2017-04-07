@@ -10,6 +10,10 @@ public class TThread extends java.lang.Thread {
 
     static ThreadLocal<HashSet<Lock>> lockSet = new ThreadLocal<>();
 
+    public static HashSet<Lock> getLockSet() {
+        return lockSet.get();
+    }
+
     // clear locks
     static Runnable onAbort = new Runnable() {
         @Override
@@ -61,4 +65,5 @@ public class TThread extends java.lang.Thread {
             onAbort.run();
         }
     }
+
 }
