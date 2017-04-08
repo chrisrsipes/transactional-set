@@ -1,4 +1,5 @@
 /**
+ * name: Transaction
  * author: aar
  * author: crs
  * description: provides implementation for abstract computing transaction.
