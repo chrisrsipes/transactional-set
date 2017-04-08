@@ -1,4 +1,5 @@
 /**
+ * name: AbortedException
  * author: crs
  * description: defines custom AbortedException for threads to throw when a transaction is aborted.
  *

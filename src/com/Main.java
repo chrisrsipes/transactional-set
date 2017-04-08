@@ -1,4 +1,5 @@
 /**
+ * name: Main
  * author: crs
  * description: entry target for application.  gives example for how to use transactionally-boosted set,
  *              as some setup is required with generating callables for the operations.

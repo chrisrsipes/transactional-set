@@ -1,11 +1,25 @@
+/**
+ * name: CustomLogger
+ * author: crs
+ * description: custom logger implementation to produce readable
+ *              logs for events, metrics, transaction's actions,
+ *              exceptions, and debugging information.
+ *              uses pipes as a delimiter, can easily be parsed
+ *              in excel by splitting on column and filtering by category
+ *
+ * Edit History:
+ * - Created by crs on 4/7/17.
+ *
+ * Updates:
+ * - new Categories
+ *
+ */
+
 package com;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-/**
- * Created by crs on 4/7/17.
- */
 public class CustomLogger {
 
     public enum Category {
