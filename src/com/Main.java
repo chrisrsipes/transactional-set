@@ -146,3 +146,27 @@ public class Main {
         return ThreadLocalRandom.current().nextInt(MIN_VALUE, MAX_VALUE + 1);
     }
 }
+
+/*
+ * potential refactors
+ *
+ * (we should most likely do this one)
+ * 0. make the SkipListKey implementation generic instead of hardcoded Integer, should be
+ *    easy refactor
+ *
+ * (these would make our program realistically usable to plug in methods and get a transactional
+ *  data structure from a thread-safe concurrent base obect)
+ * 1. Create an interface for Transaction's static callable methods so that operations and
+ *    their inverses can be plugged in.  This would require an inverse mapper as well as
+ *    existing methods.
+ *
+ * 2. Define how commits and aborts would work for operations with multiple steps in a transaction,
+ *    and fit current code to fit that multiplicity.  From there, we can extract the commit and abort
+ *    methods to pluggable interfaces as well.  would require heavy refactor of how the Callables are being
+ *    created and passed around.
+ *
+ * 3. Finally, extract out the data structure itself and its operations to a pluggable interface so
+ *    that people can plug in new data structures with defined commits, aborts, operations, and inverses
+ *    that it makes sense to place semantic locks on.
+ *
+*/
