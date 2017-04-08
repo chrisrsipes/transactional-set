@@ -7,19 +7,38 @@ import java.util.concurrent.locks.Lock;
 
 /**
  * Created by aar on 4/5/17.
- * Got this straight from the book page 445
+ * Updated by crs on 4/6/17.
+ * Updated by crs on 4/7/17.
+ *
+ * Largely derived from Art of Multiprocessor Programming page 445,
+ * see Transaction implementation for Transactional Threads.
+ *
+ * Updates:
+ * - added ThreadLocal lockSet, as per transactional boosting algorithm
+ * - added AtomicReference to indicate whether or not the inverse operation should be invoked
+ *   note that this is a deviation from the transactional boosting algorithm where they were
+ *   somehow setting an onAbort handler that would be executed on abort.  the requirement for
+ *   calling methods to be static prevented us from setting an instance variable or a handler at runtime
+ * - new constructors for these variables
+ * - extension on abort to conditionally perform inverse operation to correctly mock onAbort handler
+ * - static util methods to generate add, remove, contains, and noop callables for private use
+ * - static util methods to generate operations and inverses for calling application
+ *
  */
 public class Transaction {
     public enum Status {ABORTED, ACTIVE, COMMITTED};
 
-    // This Line makes no sense to me.
+    // @TODO: identify why having a default COMMITTED transaction is necessary according to the book
     public static Transaction COMMITTED = new Transaction(Status.COMMITTED);
+
+    // these drive aborting / committing and correctly invoking the inverse operation
     private final AtomicReference<Status> status;
     private final AtomicReference<Boolean> useInverseOperation;
     private final Callable<Boolean> operation;
     private final Callable<Boolean> inverse;
 
-
+    // declare and intialize ThreadLocal variables to be statically available
+    // to the currently executing thread.  see the getters / setters for access to internal vars
     static ThreadLocal<Transaction> localTransaction = new ThreadLocal<Transaction>(){
         protected Transaction initialValue(){
             return new Transaction(Status.COMMITTED);
@@ -32,15 +51,6 @@ public class Transaction {
         }
     };
 
-    // make thread local lock set with getters / setters
-    // static ThreadLocal<Transaction>
-
-    public Transaction(){
-        status = new AtomicReference<>(Status.ACTIVE);
-        useInverseOperation = new AtomicReference<>(false);
-        this.operation = Transaction.getNoopOperation();
-        this.inverse = Transaction.getNoopOperation();
-    }
 
     public Transaction(Callable<Boolean> operation, Callable<Boolean> inverse) {
         status = new AtomicReference<>(Status.ACTIVE);
@@ -48,6 +58,7 @@ public class Transaction {
         this.operation = operation;
         this.inverse = inverse;
     }
+
 
     private Transaction(Transaction.Status myStatus){
         status = new AtomicReference<Status>(myStatus);
@@ -73,6 +84,9 @@ public class Transaction {
         return status.compareAndSet(Status.ACTIVE, Status.COMMITTED);
     }
 
+    // modified abort to correctly perform inverse operations on completed (but not committed) operations.
+    // because we're working with a set, our operations are naturally 1 operation long, so only
+    // 0 or 1 operations need the inversees invoked (indicated by the useInverse flag we're maintaining)
     public boolean abort() {
         if (status.compareAndSet(Status.ACTIVE, Status.ABORTED)) {
             // if we aborted, may need to call inverse operation
@@ -80,13 +94,19 @@ public class Transaction {
                 try {
                     this.inverse.call();
                 } catch (Exception e) {
+                    // don't need to take action here.  inverse operation will retry while aborted,
+                    // if the list was affected (which it must be if useInverse is set), and we still have the
+                    // abstract lock for the affected element, we will be able to successfully run the inverse
                     String logMsg = String.format("Exception calling inverse in abort: %s", e.getStackTrace().toString());
                     CustomLogger.log(CustomLogger.Category.EXCEPTION, logMsg);
                 }
             }
+
+            // successfully aborted
             return true;
         }
         else {
+            // was aborted before, repeated work would leave set in invalid state
             return false;
         }
     }
@@ -139,39 +159,49 @@ public class Transaction {
         };
     }
 
+    // generates operation based on operationType, for operationValue into transactionalSet.
+    // the input parameters must be taken as final, as they are
+    // used in the generated Callable (all variables used locally in callable must be final).
     public static Callable<Boolean> getCallableOperation(SkipListKey.OperationType operationType, final int operationValue, final SkipListKey transactionalSet) {
         Callable<Boolean> operation;
 
-        if (operationType.equals(SkipListKey.OperationType.ADD)) {
-            operation = getAddOperation(operationType, operationValue, transactionalSet);
-        }
-        else if (operationType.equals(SkipListKey.OperationType.REMOVE)) {
-            operation = getRemoveOperation(operationType, operationValue, transactionalSet);
-        }
-        else if (operationType.equals(SkipListKey.OperationType.CONTAINS)) {
-            operation = getContainsOperation(operationType, operationValue, transactionalSet);
-        }
-        else {
-            operation = getNoopOperation();
+        switch (operationType) {
+            case ADD:
+                operation = getAddOperation(operationType, operationValue, transactionalSet);
+                break;
+            case REMOVE:
+                operation = getRemoveOperation(operationType, operationValue, transactionalSet);
+                break;
+            case CONTAINS:
+                operation = getContainsOperation(operationType, operationValue, transactionalSet);
+                break;
+            default:
+                operation = getNoopOperation();
+                break;
         }
 
         return operation;
     }
 
+    // generates inverse operation based on operationType, for operationValue into transactionalSet.
+    // the input parameters must be taken as final, as they are
+    // used in the generated Callable (all variables used locally in callable must be final).
     public static Callable<Boolean> getCallableInverse(SkipListKey.OperationType operationType, final int operationValue, final SkipListKey transactionalSet) {
         Callable<Boolean> operation;
 
-        if (operationType.equals(SkipListKey.OperationType.ADD)) {
-            operation = getRemoveOperation(operationType, operationValue, transactionalSet);
-        }
-        else if (operationType.equals(SkipListKey.OperationType.REMOVE)) {
-            operation = getAddOperation(operationType, operationValue, transactionalSet);
-        }
-        else if (operationType.equals(SkipListKey.OperationType.CONTAINS)) {
-            operation = getNoopOperation();
-        }
-        else {
-            operation = getNoopOperation();
+        switch (operationType) {
+            case ADD:
+                operation = getRemoveOperation(operationType, operationValue, transactionalSet);
+                break;
+            case REMOVE:
+                operation = getAddOperation(operationType, operationValue, transactionalSet);
+                break;
+            case CONTAINS:
+                operation = getNoopOperation();
+                break;
+            default:
+                operation = getNoopOperation();
+                break;
         }
 
         return operation;

@@ -95,7 +95,7 @@ public class Main {
 
 
                 } catch (InterruptedException e) {
-                    // it shouldn't interrupt my threads
+                    CustomLogger.log(CustomLogger.Category.EXCEPTION, "Timed out waiting for operations in pool to finish.  You may need to increase the max timeout.");
                 }
 
             }
