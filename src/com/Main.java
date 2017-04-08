@@ -25,10 +25,13 @@ public class Main {
 
         CustomLogger.log(CustomLogger.Category.EVENT, "Beginning test.");
 
+        // for testing purposes, we're varying the number of threads and the proportion of operations
+        // for each of these configurations, we need to run operationCount operations
         for (int threadCount : threadCounts) {
             for (double addProportion : addProportions) {
 
-                final SkipListKey transactionalSet = new SkipListKey();
+                // declare a new skiplist to start over for each configuration
+                SkipListKey transactionalSet = new SkipListKey();
 
                 logArgs = new Object[] {threadCount, addProportion, operationCount};
                 CustomLogger.log(
@@ -36,13 +39,15 @@ public class Main {
                         String.format("Preparing for simulation with threadCount: %d, addProportion: %f, opCount: %d", logArgs)
                 );
 
-                // prepare the operations / inverses to schedule
+                // prepare the operations / inverses to schedule before kicking off threads
                 Callable<Boolean>[] operations = new Callable[operationCount];
                 Callable<Boolean>[] inverses = new Callable[operationCount];
                 for (int i = 0; i < operationCount; i++) {
-                    final SkipListKey.OperationType operationType = getOperationType(addProportion);
-                    final Integer operationValue = getOperationValue();
+                    // randomly generate operations and values
+                    SkipListKey.OperationType operationType = getOperationType(addProportion);
+                    Integer operationValue = getOperationValue();
 
+                    // generate the operations / inverses using utility classes in Transaction
                     Callable<Boolean> operation = Transaction.getCallableOperation(operationType, operationValue, transactionalSet);
                     Callable<Boolean> inverse   = Transaction.getCallableInverse(operationType, operationValue, transactionalSet);
 
@@ -56,17 +61,19 @@ public class Main {
                     );
                 }
 
+                // kick off fixed thread pool, it will manage scheduling threadCount threads as they finish executing
+                // we don't need to interact with its job queue
                 ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(threadCount);
 
-                logArgs = new Object[] {threadCount, addProportion, operationCount};
                 CustomLogger.log(CustomLogger.Category.EVENT, "Beginning simulation.");
 
                 startTime = System.nanoTime();
 
+                // kick off all the operations.  this does not wait for the operation to finish, it simply initializes
+                // the thread itll run on and adds it to the thread pool
                 for (int i = 0; i < operationCount; i++) {
                     threadPoolExecutor.execute(new TThread(operations[i], inverses[i]));
                 }
-
 
                 // this closes down any more tasks being scheduled for the threads to pick up
                 threadPoolExecutor.shutdown();
@@ -77,7 +84,7 @@ public class Main {
                     // will pause execution of this thread untill all threads in the ThreadPoolExecutor are finished
                     threadPoolExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
-                    // now finished, so end the timer.  durationMS is in miliseconds
+                    // now finished, so end the timer.  durationMS is in ms
                     endTime = System.nanoTime();
                     long durationMS = (endTime - startTime) / 1000000;
 
@@ -104,6 +111,7 @@ public class Main {
         CustomLogger.log(CustomLogger.Category.EVENT, "Finished simulation.");
     }
 
+    // @TODO: change from addProporition to 3 arrays of proportions for respective operations
     private static SkipListKey.OperationType getOperationType(double addProportion) {
         double rand = Math.random();
 
