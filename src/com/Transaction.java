@@ -61,7 +61,7 @@ public class Transaction {
         return status.get();
     }
 
-    public Boolean getUseInverse() {
+    public Boolean useInverse() {
         return useInverseOperation.get();
     }
 
@@ -74,7 +74,20 @@ public class Transaction {
     }
 
     public boolean abort() {
-        return status.compareAndSet(Status.ACTIVE, Status.ABORTED);
+        if (status.compareAndSet(Status.ACTIVE, Status.ABORTED)) {
+            // if we aborted, may need to call inverse operation
+            if (Transaction.getLocal().useInverse()) {
+                try {
+                    this.inverse.call();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     public static Transaction getLocal() {

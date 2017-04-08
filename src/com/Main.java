@@ -9,8 +9,8 @@ public class Main {
     // private static final int [] threadCounts = {1,2,4,8};
     // private static final double []  addProportions = {0.25, 0.50, 0.75};
 
-    private static final int operationCount = 20;
-    private static final int [] threadCounts = {2};
+    private static final int operationCount = 40;
+    private static final int [] threadCounts = {4};
     private static final double []  addProportions = {0.50};
 
     private static final long timeoutDuration = 10000;
