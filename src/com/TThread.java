@@ -9,20 +9,14 @@ public class TThread extends java.lang.Thread {
     private final Callable<Boolean> operation;
     private final Callable<Boolean> inverse;
 
-    //static ThreadLocal<HashSet<Lock>> lockSet = new ThreadLocal<>();
-    static HashSet<Lock> lockSet = new HashSet<Lock>();
-
-    public static HashSet<Lock> getLockSet() {
-        return lockSet;//.get();
-    }
-
     // clear locks
     static Runnable onAbort = new Runnable() {
         @Override
         public void run() {
-            //HashSet<Lock> locks = lockSet.get();
+            HashSet<Lock> lockSet = Transaction.getLockSet();
             for (Lock l : lockSet) {
                 l.unlock();
+                lockSet.remove(l);
             }
         }
     };
@@ -31,9 +25,10 @@ public class TThread extends java.lang.Thread {
     static Runnable onCommit = new Runnable() {
         @Override
         public void run() {
-            //HashSet<Lock> locks = lockSet.get();
+            HashSet<Lock> lockSet = Transaction.getLockSet();
             for (Lock l : lockSet) {
                 l.unlock();
+                lockSet.remove(l);
             }
         }
     };
@@ -50,7 +45,7 @@ public class TThread extends java.lang.Thread {
                 case COMMITTED:
                     return true;
                 case ACTIVE:
-                    return false;
+                    return true;
             }
 
             return false;

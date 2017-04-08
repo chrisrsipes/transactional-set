@@ -8,9 +8,14 @@ import java.util.logging.Logger;
 public class Main {
     private static final Logger logger = Logger.getLogger( Main.class.getName() );
 
-    private static final int operationCount = 50000;
+    private static final int operationCount = 500000;
     private static final int [] threadCounts = {1,2,4,8};
     private static final double []  addProportions = {0.25, 0.50, 0.75};
+
+    // private static final int operationCount = 10;
+    // private static final int [] threadCounts = {2};
+    // private static final double []  addProportions = {0.50};
+
     private static final long timeoutDuration = 10000;
     private static final int MIN_VALUE = 0;
     private static final int MAX_VALUE = 100000;

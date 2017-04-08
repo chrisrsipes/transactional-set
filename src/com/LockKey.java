@@ -17,7 +17,7 @@ public class LockKey {
 
     public void lock(int key) throws AbortedException, InterruptedException {
         Lock lock = map.get(key);
-        HashSet<Lock> lockSet = TThread.getLockSet();
+        HashSet<Lock> lockSet = Transaction.getLockSet();
 
         if (lock == null) {
             Lock newLock = new ReentrantLock();

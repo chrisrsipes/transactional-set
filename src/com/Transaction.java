@@ -1,7 +1,9 @@
 package com;
 
+import java.util.HashSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Created by aar on 4/5/17.
@@ -18,9 +20,15 @@ public class Transaction {
     private final Callable<Boolean> inverse;
 
 
-    static ThreadLocal<Transaction> local = new ThreadLocal<Transaction>(){
+    static ThreadLocal<Transaction> localTransaction = new ThreadLocal<Transaction>(){
         protected Transaction initialValue(){
             return new Transaction(Status.COMMITTED);
+        }
+    };
+
+    static ThreadLocal<HashSet<Lock>> localLockSet = new ThreadLocal<HashSet<Lock>>(){
+        protected HashSet<Lock> initialValue(){
+            return new HashSet<>();
         }
     };
 
@@ -70,11 +78,15 @@ public class Transaction {
     }
 
     public static Transaction getLocal() {
-        return local.get();
+        return localTransaction.get();
     }
 
     public static void setLocal(Transaction transaction) {
-        local.set(transaction);
+        localTransaction.set(transaction);
+    }
+
+    public static HashSet<Lock> getLockSet() {
+        return localLockSet.get();
     }
 
     private static Callable<Boolean> getAddOperation(SkipListKey.OperationType operationType, final int operationValue, final SkipListKey transactionalSet) {
