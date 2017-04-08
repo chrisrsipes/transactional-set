@@ -1,8 +1,25 @@
+/**
+ * author: crs
+ * description: entry target for application.  gives example for how to use transactionally-boosted set,
+ *              as some setup is required with generating callables for the operations.
+ *              main purpose is to vary over the number of threads operations will be executed on,
+ *              and the proportions of operations (add / remove / contains) that will be generated.
+ *              log metrics for performance benchmarking.
+ *
+ * Edit History:
+ * - Renovated by crs on 4/7/17.
+ *
+ * Updates:
+ * - changes to how callables are being generated
+ * - operations and inverses are now generated in advance of running the simulation for the configuration
+ * - refactored method of logging
+ *
+ */
+
+
 package com;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 
-import java.util.Random;
 import java.util.concurrent.*;
 
 public class Main {

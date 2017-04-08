@@ -1,15 +1,18 @@
-package com;
-
-import java.util.HashSet;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-
 /**
- * Created by aar on 4/5/17.
- * Updated by crs on 4/6/17.
- * Updated by crs on 4/7/17.
+ * author: aar
+ * author: crs
+ * description: provides implementation for abstract computing transaction.
+ *              has status, can go from active to committed or aborted,
+ *              with consequences for each.  provides utility classes
+ *              to generate required runnables for operations and inverses
+ *              on the data structure.
  *
+ * Edit History:
+ * - Created by aar on 4/5/17.
+ * - Updated by crs on 4/6/17.
+ * - Updated by crs on 4/7/17.
+ *
+ * Acknowledgements:
  * Largely derived from Art of Multiprocessor Programming page 445,
  * see Transaction implementation for Transactional Threads.
  *
@@ -25,6 +28,14 @@ import java.util.concurrent.locks.Lock;
  * - static util methods to generate operations and inverses for calling application
  *
  */
+
+package com;
+
+import java.util.HashSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+
 public class Transaction {
     public enum Status {ABORTED, ACTIVE, COMMITTED};
 
