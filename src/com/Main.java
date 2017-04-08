@@ -2,33 +2,28 @@ package com;
 
 import java.util.Random;
 import java.util.concurrent.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class Main {
-    private static final Logger logger = Logger.getLogger( Main.class.getName() );
 
-    private static final int operationCount = 500000;
-    private static final int [] threadCounts = {1,2,4,8};
-    private static final double []  addProportions = {0.25, 0.50, 0.75};
+    // private static final int operationCount = 500000;
+    // private static final int [] threadCounts = {1,2,4,8};
+    // private static final double []  addProportions = {0.25, 0.50, 0.75};
 
-    // private static final int operationCount = 10;
-    // private static final int [] threadCounts = {2};
-    // private static final double []  addProportions = {0.50};
+    private static final int operationCount = 20;
+    private static final int [] threadCounts = {2};
+    private static final double []  addProportions = {0.50};
 
     private static final long timeoutDuration = 10000;
     private static final int MIN_VALUE = 0;
-    private static final int MAX_VALUE = 100000;
+    private static final int MAX_VALUE = 10;
 
     public static void main(String[] args) {
         Random r = new Random();
 
         long startTime, endTime;
 
-        logger.log(Level.INFO, "Starting simulation.");
-
-        System.out.println("tCount\t\t% add\t\ttime (ms)");
-
+        CustomLogger.log(CustomLogger.Category.EVENT, "Starting simulation.");
+        CustomLogger.log(CustomLogger.Category.METRIC, "tCount\t\t% add\t\ttime (ms)");
 
         for (int threadCount : threadCounts) {
             for (double addProportion : addProportions) {
@@ -61,7 +56,8 @@ public class Main {
                     long durationMS = (endTime - startTime) / 1000000;
 
                     // write the output
-                    System.out.println(threadCount + "\t\t" + addProportion + "\t\t" + durationMS);
+                    Object[] logArgs = new Object[] {threadCount, addProportion, durationMS};
+                    CustomLogger.log(CustomLogger.Category.METRIC, String.format("%3d\t\t%4f\t\t%d", logArgs));
 
                 } catch (InterruptedException e) {
                     // it shouldn't interrupt my threads
@@ -70,7 +66,7 @@ public class Main {
             }
         }
 
-        logger.log(Level.INFO, "Finished simulation.");
+        CustomLogger.log(CustomLogger.Category.EVENT, "Finished simulation.");
     }
 
     private static SkipListKey.OperationType getOperationType(double addProportion) {

@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 
 public class SkipListKey {
 
-    public static enum OperationType {
+    public enum OperationType {
         CONTAINS,
         ADD,
         REMOVE
@@ -31,6 +31,9 @@ public class SkipListKey {
             lock.lock(v);
             result = list.add(v);
 
+            Object[] logArgs = new Object[] {v, result ? "COMPLETED" : "FAILED"};
+            CustomLogger.log(CustomLogger.Category.TRANSACTION, String.format("adding %d to the set (status: %s)", logArgs));
+
             if (result) {
                 Transaction.getLocal().setUseInverse();
             }
@@ -47,6 +50,9 @@ public class SkipListKey {
         try {
             lock.lock(v);
             result = list.remove(v);
+
+            Object[] logArgs = new Object[] {v, result ? "COMPLETED" : "FAILED"};
+            CustomLogger.log(CustomLogger.Category.TRANSACTION, String.format("removing %d from the set (status: %s)", logArgs));
 
             if (result) {
                 Transaction.getLocal().setUseInverse();
