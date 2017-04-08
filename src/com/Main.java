@@ -1,5 +1,7 @@
 package com;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
+
 import java.util.Random;
 import java.util.concurrent.*;
 
@@ -9,31 +11,34 @@ public class Main {
     // private static final int [] threadCounts = {1,2,4,8};
     // private static final double []  addProportions = {0.25, 0.50, 0.75};
 
-    private static final int operationCount = 40;
-    private static final int [] threadCounts = {4};
-    private static final double []  addProportions = {0.50};
+    private static final int operationCount = 25000;
+    private static final int [] threadCounts = {2, 4, 8};
+    private static final double []  addProportions = {0.25, 0.50, 0.75};
 
     private static final long timeoutDuration = 10000;
     private static final int MIN_VALUE = 0;
     private static final int MAX_VALUE = 10;
 
     public static void main(String[] args) {
-        Random r = new Random();
-
+        Object[] logArgs;
         long startTime, endTime;
 
-        CustomLogger.log(CustomLogger.Category.EVENT, "Starting simulation.");
-        CustomLogger.log(CustomLogger.Category.METRIC, "tCount\t\t% add\t\ttime (ms)");
+        CustomLogger.log(CustomLogger.Category.EVENT, "Beginning test.");
 
         for (int threadCount : threadCounts) {
             for (double addProportion : addProportions) {
 
                 final SkipListKey transactionalSet = new SkipListKey();
 
-                ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(threadCount);
+                logArgs = new Object[] {threadCount, addProportion, operationCount};
+                CustomLogger.log(
+                        CustomLogger.Category.EVENT,
+                        String.format("Preparing for simulation with threadCount: %d, addProportion: %f, opCount: %d", logArgs)
+                );
 
-                startTime = System.nanoTime();
-
+                // prepare the operations / inverses to schedule
+                Callable<Boolean>[] operations = new Callable[operationCount];
+                Callable<Boolean>[] inverses = new Callable[operationCount];
                 for (int i = 0; i < operationCount; i++) {
                     final SkipListKey.OperationType operationType = getOperationType(addProportion);
                     final Integer operationValue = getOperationValue();
@@ -41,13 +46,34 @@ public class Main {
                     Callable<Boolean> operation = Transaction.getCallableOperation(operationType, operationValue, transactionalSet);
                     Callable<Boolean> inverse   = Transaction.getCallableInverse(operationType, operationValue, transactionalSet);
 
-                    threadPoolExecutor.execute(new TThread(operation, inverse));
+                    operations[i] = operation;
+                    inverses[i] = inverse;
+
+                    logArgs = new Object[] {operationType, operationValue};
+                    CustomLogger.log(
+                            CustomLogger.Category.DEBUG_FINE,
+                            String.format("New operation created: %s(%d)", logArgs)
+                    );
                 }
+
+                ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(threadCount);
+
+                logArgs = new Object[] {threadCount, addProportion, operationCount};
+                CustomLogger.log(CustomLogger.Category.EVENT, "Beginning simulation.");
+
+                startTime = System.nanoTime();
+
+                for (int i = 0; i < operationCount; i++) {
+                    threadPoolExecutor.execute(new TThread(operations[i], inverses[i]));
+                }
+
 
                 // this closes down any more tasks being scheduled for the threads to pick up
                 threadPoolExecutor.shutdown();
 
                 try {
+                    CustomLogger.log(CustomLogger.Category.EVENT, "All operations placed in pool to be scheduled on threads.  Waiting for completion.");
+
                     // will pause execution of this thread untill all threads in the ThreadPoolExecutor are finished
                     threadPoolExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
@@ -55,9 +81,18 @@ public class Main {
                     endTime = System.nanoTime();
                     long durationMS = (endTime - startTime) / 1000000;
 
-                    // write the output
-                    Object[] logArgs = new Object[] {threadCount, addProportion, durationMS};
-                    CustomLogger.log(CustomLogger.Category.METRIC, String.format("%3d\t\t%4f\t\t%d", logArgs));
+                    logArgs = new Object[] {durationMS};
+                    CustomLogger.log(
+                            CustomLogger.Category.EVENT,
+                            String.format("All operations completed.  Total Time: %d", logArgs)
+                    );
+
+                    logArgs = new Object[] {threadCount, addProportion, operationCount, durationMS};
+                    CustomLogger.log(
+                            CustomLogger.Category.METRIC,
+                            String.format("threadCount: %d, addProportion: %f, opCount: %d, time: %d", logArgs)
+                    );
+
 
                 } catch (InterruptedException e) {
                     // it shouldn't interrupt my threads

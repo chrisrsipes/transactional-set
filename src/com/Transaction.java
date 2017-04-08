@@ -80,7 +80,8 @@ public class Transaction {
                 try {
                     this.inverse.call();
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    String logMsg = String.format("Exception calling inverse in abort: %s", e.getStackTrace().toString());
+                    CustomLogger.log(CustomLogger.Category.EXCEPTION, logMsg);
                 }
             }
             return true;
