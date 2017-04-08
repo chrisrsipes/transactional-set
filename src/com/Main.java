@@ -23,6 +23,7 @@ package com;
 
 import java.util.concurrent.*;
 
+// @TODO: remove references to old logger
 public class Main {
 
     // private static final int operationCount = 500000;
