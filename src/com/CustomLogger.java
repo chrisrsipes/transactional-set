@@ -18,6 +18,7 @@
 package com;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 public class CustomLogger {
@@ -32,15 +33,25 @@ public class CustomLogger {
         DEBUG_COARSE
     };
 
-    // @TODO: create final excluded logs that can be set once at the beginning
-    // of the application (during an initialization step), which will filter out excluded logs
-    // (or inverse: provide list of logs to print out)
+    private static ArrayList<Category> logCategories = new ArrayList<>();
+
+    public static void setLogCategories(ArrayList<Category> logCategories) {
+        // empty out the list
+        CustomLogger.logCategories.removeAll(CustomLogger.logCategories);
+
+        for (Category category : logCategories) {
+            CustomLogger.logCategories.add(category);
+        }
+    }
+
     public static void log(Category category, String msg) {
-        long threadId = Thread.currentThread().getId();
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
-        Object[] logArgs = new Object[] {sdf.format(new Date()), category, threadId, msg};
-        String output = String.format("[%s] | [%12s] | [%d] | %s", logArgs);
-        System.out.println(output);
+        if (CustomLogger.logCategories.contains(category)) {
+            long threadId = Thread.currentThread().getId();
+            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.SSS");
+            Object[] logArgs = new Object[] {sdf.format(new Date()), category, threadId, msg};
+            String output = String.format("[%s] | [%12s] | [%d] | %s", logArgs);
+            System.out.println(output);
+        }
     }
 
 }

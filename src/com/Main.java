@@ -21,6 +21,7 @@
 package com;
 
 
+import java.util.ArrayList;
 import java.util.concurrent.*;
 
 // @TODO: remove references to old logger
@@ -30,17 +31,21 @@ public class Main {
     // private static final int [] threadCounts = {1,2,4,8};
     // private static final double []  addProportions = {0.25, 0.50, 0.75};
 
-    private static final int operationCount = 25000;
+    private static final int operationCount = 500000;
     private static final int [] threadCounts = {2, 4, 8};
     private static final double []  addProportions = {0.25, 0.50, 0.75};
 
     private static final long timeoutDuration = 10000;
     private static final int MIN_VALUE = 0;
-    private static final int MAX_VALUE = 10;
+    private static final int MAX_VALUE = 1000000;
 
     public static void main(String[] args) {
         Object[] logArgs;
         long startTime, endTime;
+
+        ArrayList<CustomLogger.Category> logCategories = new ArrayList<>();
+        logCategories.add(CustomLogger.Category.METRIC);
+        CustomLogger.setLogCategories(logCategories);
 
         CustomLogger.log(CustomLogger.Category.EVENT, "Beginning test.");
 
@@ -66,6 +71,7 @@ public class Main {
                     SkipListKey.OperationType operationType = getOperationType(addProportion);
                     Integer operationValue = getOperationValue();
 
+                    // @TODO: move inverse to be a ThreadLocal Callable with it intiialized to noop
                     // generate the operations / inverses using utility classes in Transaction
                     Callable<Boolean> operation = Transaction.getCallableOperation(operationType, operationValue, transactionalSet);
                     Callable<Boolean> inverse   = Transaction.getCallableInverse(operationType, operationValue, transactionalSet);
